@@ -1,0 +1,43 @@
+version: "3.9"
+networks:
+    app:
+
+volumes:
+    mysqlVol:
+        driver: local
+
+services:
+    database:
+        image: mysql:8.0.26
+        container_name: ${PROJECT_NAME}_database
+        tty: true
+        volumes:
+            - mysqlVol:/var/lib/mysql
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: ${DB_NAME}
+            MYSQL_USER: ${DOCKER_DB_USER}
+            MYSQL_PASSWORD: ${DB_PASSWD}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWD}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        networks:
+            - app
+
+    python:
+        tty: true
+        image: python:3.12-alpine
+        command: /usr/src/app/docker/python_setup.sh
+        working_dir: /usr/src/app
+        container_name: ${PROJECT_NAME}_python
+        volumes:
+            - .:/usr/src/app:delegated
+            - ./logs:/external/logs
+        ports:
+            - "80:80"
+            - "8080:80"
+        depends_on:
+            - database
+        networks:
+            - app
